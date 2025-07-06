@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A0A88C98-29B9-4831-82A3-76FE50B21217}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelingEvolution.NetworkManager", "src\ModelingEvolution.NetworkManager\ModelingEvolution.NetworkManager.csproj", "{D23BED5B-7112-4922-950D-A89EABB0FB7A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DDFCC8C5-6E33-41FF-A48B-A171B63392C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelingEvolution.NetworkManager.Tests", "tests\ModelingEvolution.NetworkManager.Tests\ModelingEvolution.NetworkManager.Tests.csproj", "{34DBE274-C20A-4E04-9103-C16715325184}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D23BED5B-7112-4922-950D-A89EABB0FB7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D23BED5B-7112-4922-950D-A89EABB0FB7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D23BED5B-7112-4922-950D-A89EABB0FB7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D23BED5B-7112-4922-950D-A89EABB0FB7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34DBE274-C20A-4E04-9103-C16715325184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34DBE274-C20A-4E04-9103-C16715325184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34DBE274-C20A-4E04-9103-C16715325184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34DBE274-C20A-4E04-9103-C16715325184}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D23BED5B-7112-4922-950D-A89EABB0FB7A} = {A0A88C98-29B9-4831-82A3-76FE50B21217}
+		{34DBE274-C20A-4E04-9103-C16715325184} = {DDFCC8C5-6E33-41FF-A48B-A171B63392C5}
+	EndGlobalSection
+EndGlobal

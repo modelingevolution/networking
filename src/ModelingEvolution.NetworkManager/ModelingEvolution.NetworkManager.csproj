@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>ModelingEvolution.NetworkManager</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>ModelingEvolution</Authors>
+    <Company>ModelingEvolution</Company>
+    <Product>NetworkManager</Product>
+    <Description>A .NET wrapper for NetworkManager D-Bus interface providing comprehensive network management capabilities for Linux systems. Supports WiFi, Ethernet, bridging, and advanced network configuration.</Description>
+    <PackageTags>NetworkManager;D-Bus;Linux;WiFi;Ethernet;Network;Bridge;Connection</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/modelingevolution/networkmanager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/modelingevolution/networkmanager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelingEvolution.Ipv4" Version="1.0.0" />
+    <PackageReference Include="ModelingEvolution.JsonParsableConverter" Version="1.0.0" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.2" />
+  </ItemGroup>
+
+</Project>

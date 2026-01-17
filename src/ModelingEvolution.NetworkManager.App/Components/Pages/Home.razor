@@ -1,0 +1,35 @@
+@page "/"
+@using ModelingEvolution.NetworkManager.Contracts
+@inject IEnvironment env
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="WiFi">
+        <MudStack>
+            <WirelessConnection HostName="@env.HostName" />
+            <WirelessStations HostName="@env.HostName"/>
+            <WirelessProfiles HostName="@env.HostName" />
+        </MudStack>
+    </MudTabPanel>
+    <MudTabPanel Text="Ethernet">
+        <MudStack Spacing="4">
+            @* Master: Interface selector *@
+            <EthernetInterfaceSelector HostName="@env.HostName"
+                                       @bind-SelectedInterface="_selectedInterface" />
+
+            @* Detail: Configuration cards for selected interface *@
+            @if (!string.IsNullOrEmpty(_selectedInterface))
+            {
+                <EthernetConfiguration HostName="@env.HostName" InterfaceName="@_selectedInterface" />
+                <DnsConfiguration HostName="@env.HostName" InterfaceName="@_selectedInterface" />
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">Select an Ethernet interface to view configuration.</MudAlert>
+            }
+        </MudStack>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private string? _selectedInterface;
+}

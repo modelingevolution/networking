@@ -242,6 +242,11 @@ namespace ModelingEvolution.NetworkManager
                 Client = client
             };
         }
+        public async Task ReactivateConnection(PathId profileId, PathId deviceId)
+        {
+            await NetworkManager.ActivateConnectionAsync(profileId, deviceId, "/");
+        }
+
         public async ValueTask DisposeAsync()
         {
             if (this.Connection is IAsyncDisposable connectionAsyncDisposable)

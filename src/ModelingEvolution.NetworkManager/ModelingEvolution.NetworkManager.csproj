@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -23,10 +23,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ModelingEvolution.Ipv4" Version="1.0.0" />
-    <PackageReference Include="ModelingEvolution.JsonParsableConverter" Version="1.0.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.2" />
+    <PackageReference Include="ModelingEvolution.Ipv4" Version="1.1.*" />
+    <PackageReference Include="ModelingEvolution.JsonParsableConverter" Version="1.0.1" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.23.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,70 @@
+@using ModelingEvolution.NetworkManager.Contracts
+
+<MudStack Spacing="3">
+    <MudSelect T="Ip4Method" Value="Method" ValueChanged="OnMethodChanged" Label="IP assignment" Variant="Variant.Outlined">
+        <MudSelectItem Value="Ip4Method.Auto">Automatic (DHCP)</MudSelectItem>
+        <MudSelectItem Value="Ip4Method.Manual">Manual</MudSelectItem>
+    </MudSelect>
+
+    @if (Method == Ip4Method.Manual)
+    {
+        <MudTextField T="string" Value="Address" ValueChanged="OnAddressChanged" Label="IPv4 address" Variant="Variant.Outlined"
+                      Placeholder="192.168.1.100" Required="true" />
+
+        <MudNumericField T="uint" Value="Prefix" ValueChanged="OnPrefixChanged" Label="Subnet prefix" Variant="Variant.Outlined"
+                         Min="1" Max="32" />
+
+        <MudTextField T="string" Value="Gateway" ValueChanged="OnGatewayChanged" Label="Gateway" Variant="Variant.Outlined"
+                      Placeholder="192.168.1.1" />
+    }
+
+    <MudNumericField T="uint" Value="Mtu" ValueChanged="OnMtuChanged" Label="MTU (0 = Auto)" Variant="Variant.Outlined"
+                     Min="0" Max="9000" HelperText="Use 9000 for GigE Vision cameras" />
+</MudStack>
+
+@code {
+    [Parameter] public Ip4Method Method { get; set; }
+    [Parameter] public EventCallback<Ip4Method> MethodChanged { get; set; }
+
+    [Parameter] public string Address { get; set; } = "";
+    [Parameter] public EventCallback<string> AddressChanged { get; set; }
+
+    [Parameter] public uint Prefix { get; set; } = 24;
+    [Parameter] public EventCallback<uint> PrefixChanged { get; set; }
+
+    [Parameter] public string Gateway { get; set; } = "";
+    [Parameter] public EventCallback<string> GatewayChanged { get; set; }
+
+    [Parameter] public uint Mtu { get; set; }
+    [Parameter] public EventCallback<uint> MtuChanged { get; set; }
+
+    private async Task OnMethodChanged(Ip4Method value)
+    {
+        Method = value;
+        await MethodChanged.InvokeAsync(value);
+    }
+
+    private async Task OnAddressChanged(string value)
+    {
+        Address = value;
+        await AddressChanged.InvokeAsync(value);
+    }
+
+    private async Task OnPrefixChanged(uint value)
+    {
+        Prefix = value;
+        await PrefixChanged.InvokeAsync(value);
+    }
+
+    private async Task OnGatewayChanged(string value)
+    {
+        Gateway = value;
+        await GatewayChanged.InvokeAsync(value);
+    }
+
+    private async Task OnMtuChanged(uint value)
+    {
+        Mtu = value;
+        await MtuChanged.InvokeAsync(value);
+    }
+}

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>ModelingEvolution.NetworkManager.Ui</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.*" />
+    <PackageReference Include="MudBlazor" Version="8.*" />
+    <PackageReference Include="MicroPlumberd.SourceGenerators" Version="1.1.6" />
+    <PackageReference Include="MicroPlumberd.Services" Version="1.1.6" />
+    <PackageReference Include="ModelingEvolution.Ipv4" Version="1.1.*" />
+    <PackageReference Include="ModelingEvolution.Observable" Version="0.0.*" />
+    <PackageReference Include="ModelingEvolution.Observable.Blazor" Version="0.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModelingEvolution.NetworkManager.Contracts\ModelingEvolution.NetworkManager.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+</Project>

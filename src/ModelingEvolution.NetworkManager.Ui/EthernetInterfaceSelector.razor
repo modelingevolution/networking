@@ -1,0 +1,81 @@
+@using ModelingEvolution.NetworkManager.Contracts
+@using MicroPlumberd
+@inject VmHostRegister<EthernetInterfaceSelectorVm> _vmRegister
+
+@if (_vm != null)
+{
+    <Observable Source="_vm">
+        <MudSelect T="string"
+                   Value="_vm.SelectedInterface"
+                   ValueChanged="OnInterfaceChanged"
+                   Label="Ethernet Interface"
+                   Variant="Variant.Outlined"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Dense="true">
+            @foreach (var iface in _vm.Interfaces)
+            {
+                <MudSelectItem T="string" Value="@iface.InterfaceName">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.SettingsEthernet"
+                                 Color="@(iface.Carrier ? Color.Success : Color.Default)"
+                                 Size="Size.Small" />
+                        <MudText>@iface.InterfaceName</MudText>
+                        @if (iface.Speed > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@(iface.Speed) Mbps</MudChip>
+                        }
+                        @if (!iface.Carrier)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">No cable</MudChip>
+                        }
+                    </MudStack>
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </Observable>
+}
+else
+{
+    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+}
+
+@code {
+    private EthernetInterfaceSelectorVm? _vm;
+
+    [Parameter]
+    public HostName HostName { get; set; }
+
+    [Parameter]
+    public string? SelectedInterface { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SelectedInterfaceChanged { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var vmHost = _vmRegister.Get(HostName);
+        _vm = await vmHost.Initialize(HostName);
+
+        // Subscribe to VM changes
+        _vm.SelectedInterfaceChanged += OnVmSelectionChanged;
+    }
+
+    private async void OnVmSelectionChanged(object? sender, string? value)
+    {
+        // Must use InvokeAsync to marshal back to UI thread from background event
+        await InvokeAsync(async () =>
+        {
+            await SelectedInterfaceChanged.InvokeAsync(value);
+            StateHasChanged();
+        });
+    }
+
+    private async Task OnInterfaceChanged(string? value)
+    {
+        if (_vm != null)
+        {
+            _vm.SelectedInterface = value;
+        }
+        await SelectedInterfaceChanged.InvokeAsync(value);
+    }
+}

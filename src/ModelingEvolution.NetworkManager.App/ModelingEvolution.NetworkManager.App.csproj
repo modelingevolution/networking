@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>networkmanager-app</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" Version="8.*" />
+    <PackageReference Include="MicroPlumberd.SourceGenerators" Version="1.1.6" />
+    <PackageReference Include="MicroPlumberd.Services" Version="1.1.6" />
+    <PackageReference Include="MicroPlumberd.Encryption" Version="1.1.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModelingEvolution.NetworkManager.Ui\ModelingEvolution.NetworkManager.Ui.csproj" />
+    <ProjectReference Include="..\ModelingEvolution.NetworkManager.Services\ModelingEvolution.NetworkManager.Services.csproj" />
+  </ItemGroup>
+
+</Project>

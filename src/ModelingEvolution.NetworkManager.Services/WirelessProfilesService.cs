@@ -1,0 +1,56 @@
+using ModelingEvolution.NetworkManager.Contracts;
+using MicroPlumberd;
+
+namespace ModelingEvolution.NetworkManager.Services;
+
+/// <summary>
+/// No need for a domain-service. We just need common procedures.
+/// </summary>
+static class WirelessProfilesService
+{
+    public static async Task<bool> AppendIfRequired(NetworkManagerClient client, IPlumberInstance plumber, IEnvironment env, CancellationToken stoppingToken = default)
+    {
+        WirelessProfilesState state = new WirelessProfilesState();
+
+        var devices = await Ax.ToListAsync(Ax.OfType<WifiDeviceInfo>(client.GetDevices()));
+        var activeConnection = new HashSet<PathId?>();
+        foreach (var device in devices)
+        {
+            var profileId = await device.GetConnectionProfileId();
+            if (profileId != string.Empty && profileId != "/")
+                activeConnection.Add(profileId);
+        }
+
+        bool hasChanged = false;
+        var actualProfiles = await Ax.ToArrayAsync(client.GetProfiles(), stoppingToken);
+        WirelessProfilesState? currentState = await plumber.GetState<WirelessProfilesState>(env.HostName);
+        foreach (var i in actualProfiles)
+        {
+            if (await i.Settings() is WifiProfileSettings wifi)
+            {
+                var isActive = activeConnection.Contains(i.Id);
+                var profiles = currentState != null ? currentState.AsEnumerable() : Array.Empty<WirelessProfile>();
+                if (currentState == null || !profiles.Any(x => x.FileName == i.FileName && x.IsConnected == isActive))
+                    hasChanged = true;
+
+                state.Add(new WirelessProfile
+                {
+                    InterfaceName = wifi.InterfaceName,
+                    Ssid = wifi.Ssid,
+                    ProfileName = wifi.ProfileName,
+                    FileName = i.FileName,
+                    IsConnected = isActive
+                });
+            }
+        }
+
+        if (!hasChanged)
+            if (currentState != null && currentState.Count != actualProfiles.Length)
+                hasChanged = true;
+
+        if (hasChanged)
+            await plumber.AppendState(state, env.HostName, token: stoppingToken);
+
+        return hasChanged;
+    }
+}

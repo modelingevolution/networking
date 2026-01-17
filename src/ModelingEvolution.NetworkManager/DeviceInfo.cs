@@ -229,11 +229,12 @@ public record DeviceInfo
             foreach (var i in ips2)
             {
                 ip2 = i["address"].GetString();
-                prefix2 = i["prefix"].GetInt32();
+                prefix2 = (int)i["prefix"].GetUInt32();
             }
 
 
-            Ipv4Address gw2 = await ipV4Config2.GetGatewayAsync();
+            var gwStr2 = await ipV4Config2.GetGatewayAsync();
+            Ipv4Address gw2 = string.IsNullOrEmpty(gwStr2) ? Ipv4Address.Any : gwStr2;
             return new ConnectionInfo(Ip4Config: new Ipv4Configuration(ip2, prefix2, gw2));
         }
 
@@ -246,11 +247,12 @@ public record DeviceInfo
         foreach (var i in ips)
         {
             ip  = i["address"].GetString();
-            prefix = i["prefix"].GetInt32();
+            prefix = (int)i["prefix"].GetUInt32();
         }
         
         
-        Ipv4Address gw = await ipV4Config.GetGatewayAsync();
+        var gwStr = await ipV4Config.GetGatewayAsync();
+        Ipv4Address gw = string.IsNullOrEmpty(gwStr) ? Ipv4Address.Any : gwStr;
         return new ConnectionInfo(Ip4Config: new Ipv4Configuration(ip, prefix, gw));
 
     }
@@ -312,4 +314,51 @@ public record DeviceInfo
     {
         await Device.DisconnectAsync();
     }
+
+    public async Task<EthernetProperties?> GetEthernetPropertiesAsync()
+    {
+        if (DeviceType != DeviceType.Ethernet) return null;
+
+        var deviceProps = await Device.GetPropertiesAsync();
+        uint speed = 0;
+        bool carrier = false;
+
+        try
+        {
+            var wired = Client.Service.CreateWired(Id.Path);
+            var wiredProps = await wired.GetPropertiesAsync();
+            speed = wiredProps.Speed;
+            carrier = wiredProps.Carrier;
+        }
+        catch
+        {
+            // Properties might not be available
+        }
+
+        return new EthernetProperties(
+            Mtu: deviceProps.Mtu,
+            Speed: speed,
+            Carrier: carrier,
+            HwAddress: deviceProps.HwAddress
+        );
+    }
+
+    public async Task<uint[]> GetDnsServersAsync()
+    {
+        try
+        {
+            var ip4ConfigPath = await Device.GetIp4ConfigAsync();
+            if (ip4ConfigPath == "/" || string.IsNullOrEmpty(ip4ConfigPath.ToString()))
+                return Array.Empty<uint>();
+
+            var ip4Config = Client.Service.CreateIP4Config(ip4ConfigPath);
+            return await ip4Config.GetNameserversAsync() ?? Array.Empty<uint>();
+        }
+        catch
+        {
+            return Array.Empty<uint>();
+        }
+    }
 }
+
+public record EthernetProperties(uint Mtu, uint Speed, bool Carrier, string? HwAddress);

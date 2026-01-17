@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/ModelingEvolution.NetworkManager.svg)](https://www.nuget.org/packages/ModelingEvolution.NetworkManager/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![.NET](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download)
+[![.NET](https://img.shields.io/badge/.NET-10.0-blue.svg)](https://dotnet.microsoft.com/download)
 
 A comprehensive .NET wrapper for the NetworkManager D-Bus interface, providing powerful network management capabilities for Linux systems. This library enables full control over WiFi, Ethernet, bridging, VPN, and advanced network configuration through a type-safe, async-first API.
 
@@ -385,9 +385,74 @@ Device and connection states:
 - `Unavailable` - Device not available
 - `Failed` - Connection failed
 
+## Project Structure
+
+This repository contains multiple projects:
+
+| Project | Description |
+|---------|-------------|
+| `ModelingEvolution.NetworkManager` | Core D-Bus wrapper for NetworkManager |
+| `ModelingEvolution.NetworkManager.Contracts` | CQRS commands and state models |
+| `ModelingEvolution.NetworkManager.Services` | Background services and command handlers |
+| `ModelingEvolution.NetworkManager.Ui` | Blazor Razor components (MudBlazor) |
+| `ModelingEvolution.NetworkManager.App` | Standalone Blazor Server application |
+
+## GigE Vision Camera Network Optimization
+
+When using GigE Vision cameras (e.g., Basler) on a network interface, specific optimizations are critical for reliable high-bandwidth streaming. These settings prevent packet loss and ensure maximum throughput.
+
+### Recommended Network Settings
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| MTU | 9000 | Jumbo frames for larger packets |
+| RX Ring Buffer | 4096 | Hardware receive buffer |
+| TX Ring Buffer | 4096 | Hardware transmit buffer |
+| Interrupt Coalescing | 84μs | Reduce CPU overhead |
+| UDP Receive Buffer | 32MB | OS-level socket buffer |
+| Reverse Path Filter | Disabled | Required for camera discovery |
+
+### Linux Configuration Commands
+
+```bash
+# Set MTU to 9000 (Jumbo Frames)
+sudo ip link set eth0 mtu 9000
+
+# Increase ring buffers (requires driver support)
+sudo ethtool -G eth0 rx 4096 tx 4096
+
+# Set interrupt coalescing (Intel NICs)
+sudo ethtool -C eth0 rx-usecs 84
+
+# Increase UDP receive buffer (system-wide)
+sudo sysctl -w net.core.rmem_max=33554432
+sudo sysctl -w net.core.rmem_default=33554432
+
+# Disable reverse path filtering for camera interface
+sudo sysctl -w net.ipv4.conf.eth0.rp_filter=0
+```
+
+### Persistent Configuration
+
+Add to `/etc/sysctl.d/99-gige-camera.conf`:
+```
+net.core.rmem_max=33554432
+net.core.rmem_default=33554432
+net.ipv4.conf.all.rp_filter=0
+```
+
+For MTU and ring buffers, use NetworkManager dispatcher scripts or systemd-networkd configuration.
+
+### Notes
+
+- MTU 9000 requires switch support for jumbo frames
+- Ring buffer sizes depend on NIC hardware capabilities
+- Verify settings with `ethtool eth0` and `ip link show eth0`
+- Camera and host must be on the same subnet for GigE Vision discovery
+
 ## Requirements
 
-- **.NET 9.0** or higher
+- **.NET 10.0** or higher
 - **Linux** operating system with NetworkManager
 - **D-Bus** system bus access
 - **ModelingEvolution.Ipv4** (automatically included)

@@ -1,0 +1,55 @@
+@using ModelingEvolution.NetworkManager.Contracts
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.SettingsEthernet" />
+            <MudText Typo="Typo.h6">Edit Ethernet</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <EditEthernetControl @bind-Method="Method"
+                             @bind-Address="Address"
+                             @bind-Prefix="Prefix"
+                             @bind-Gateway="Gateway"
+                             @bind-Mtu="Mtu" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public Ip4Method Method { get; set; }
+    [Parameter] public string Address { get; set; } = "";
+    [Parameter] public uint Prefix { get; set; } = 24;
+    [Parameter] public string Gateway { get; set; } = "";
+    [Parameter] public uint Mtu { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Save()
+    {
+        var result = new EditEthernetResult
+        {
+            Method = Method,
+            Address = Address,
+            Prefix = Prefix,
+            Gateway = Gateway,
+            Mtu = Mtu
+        };
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    public class EditEthernetResult
+    {
+        public Ip4Method Method { get; set; }
+        public string Address { get; set; } = "";
+        public uint Prefix { get; set; }
+        public string Gateway { get; set; } = "";
+        public uint Mtu { get; set; }
+    }
+}

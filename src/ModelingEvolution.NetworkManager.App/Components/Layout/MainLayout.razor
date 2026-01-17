@@ -1,0 +1,14 @@
+@inherits LayoutComponentBase
+
+<PageTitle>Network Manager</PageTitle>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+@Body
+
+@code {
+    private bool _isDarkMode = true;
+
+}

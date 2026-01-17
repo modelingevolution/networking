@@ -1,0 +1,117 @@
+@using ModelingEvolution.NetworkManager.Contracts
+@using MicroPlumberd
+@inject VmHostRegister<EthernetConfigurationVm> _vmRegister
+@inject IDialogService DialogService
+
+<MudCard Elevation="2" Class="ethernet-card">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.SettingsEthernet" />
+                <MudText Typo="Typo.h6">Ethernet</MudText>
+                @if (_vm?.State.Carrier == true)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small">Connected</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Default" Size="Size.Small">Disconnected</MudChip>
+                }
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="OpenEditDialog">Edit</MudButton>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_vm != null)
+        {
+            <Observable Source="_vm">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="label-text">IP assignment</MudText>
+                        <MudText Typo="Typo.body2">@(_vm.State.Ip4Method == Ip4Method.Auto ? "Automatic (DHCP)" : "Manual")</MudText>
+                    </MudStack>
+
+                    @if (_vm.State.IpConfig.HasValue)
+                    {
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="label-text">IPv4 address</MudText>
+                            <MudText Typo="Typo.body2">@_vm.State.IpConfig.Value.Address/@_vm.State.IpConfig.Value.PrefixLength</MudText>
+                        </MudStack>
+
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="label-text">Gateway</MudText>
+                            <MudText Typo="Typo.body2">@_vm.State.IpConfig.Value.Gateway</MudText>
+                        </MudStack>
+                    }
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="label-text">MTU</MudText>
+                        <MudText Typo="Typo.body2">@(_vm.State.Mtu > 0 ? _vm.State.Mtu.ToString() : "Auto")</MudText>
+                    </MudStack>
+
+                    <MudDivider Class="my-2" />
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="label-text">Link speed</MudText>
+                        <MudText Typo="Typo.body2">@(_vm.State.Speed > 0 ? $"{_vm.State.Speed} Mbps" : "-")</MudText>
+                    </MudStack>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="label-text">MAC address</MudText>
+                        <MudText Typo="Typo.body2">@(_vm.State.HwAddress ?? "-")</MudText>
+                    </MudStack>
+                </MudStack>
+            </Observable>
+        }
+        else
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private EthernetConfigurationVm? _vm;
+
+    [Parameter]
+    public HostName HostName { get; set; }
+
+    [Parameter]
+    public string InterfaceName { get; set; } = "eth0";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var vmHost = _vmRegister.Get(HostName);
+        _vm = await vmHost.Initialize(HostName, InterfaceName);
+    }
+
+    private async Task OpenEditDialog()
+    {
+        if (_vm == null) return;
+
+        var parameters = new DialogParameters<EditEthernetDialog>
+        {
+            { x => x.Method, _vm.State.Ip4Method },
+            { x => x.Address, _vm.State.IpConfig?.Address.ToString() ?? "" },
+            { x => x.Prefix, (uint)(_vm.State.IpConfig?.PrefixLength ?? 24) },
+            { x => x.Gateway, _vm.State.IpConfig?.Gateway.ToString() ?? "" },
+            { x => x.Mtu, _vm.State.Mtu }
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditEthernetDialog>("Edit Ethernet", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: EditEthernetDialog.EditEthernetResult data })
+        {
+            _vm.EditMethod = data.Method;
+            _vm.EditAddress = data.Address;
+            _vm.EditPrefix = data.Prefix;
+            _vm.EditGateway = data.Gateway;
+            _vm.EditMtu = data.Mtu;
+            await _vm.SaveEdit();
+        }
+    }
+}

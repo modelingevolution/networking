@@ -1,0 +1,16 @@
+.ethernet-card {
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.label-text {
+    color: var(--mud-palette-text-secondary);
+}
+
+::deep .mud-card-header {
+    padding-bottom: 8px;
+}
+
+::deep .mud-card-content {
+    padding-top: 0;
+}

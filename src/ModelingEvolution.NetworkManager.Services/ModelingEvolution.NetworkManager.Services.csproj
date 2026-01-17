@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>ModelingEvolution.NetworkManager.Services</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModelingEvolution.NetworkManager\ModelingEvolution.NetworkManager.csproj" />
+    <ProjectReference Include="..\ModelingEvolution.NetworkManager.Contracts\ModelingEvolution.NetworkManager.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicroPlumberd.SourceGenerators" Version="1.1.6" />
+    <PackageReference Include="MicroPlumberd.Services" Version="1.1.6" />
+    <PackageReference Include="System.Linq.Async" Version="7.0.0" ExcludeAssets="compile" PrivateAssets="all">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

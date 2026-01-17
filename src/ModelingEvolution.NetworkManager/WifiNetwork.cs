@@ -215,6 +215,16 @@ public record ProfileInfo
     {
 
     }
+
+    public async Task<Dictionary<string, Dictionary<string, VariantValue>>> GetConnectionSettings()
+    {
+        return await Connection.GetSettingsAsync();
+    }
+
+    public async Task UpdateConnectionSettings(Dictionary<string, Dictionary<string, Variant>> settings)
+    {
+        await Connection.UpdateAsync(settings);
+    }
     public async Task Deactivate(string? interfaceName = null)
     {
         var activeProfiles = await Client.GetActiveConnections();

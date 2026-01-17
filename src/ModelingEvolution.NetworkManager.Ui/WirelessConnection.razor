@@ -1,0 +1,106 @@
+@using ModelingEvolution.NetworkManager.Contracts
+@using MicroPlumberd
+@inject VmHostRegister<WirelessConnectionVm> _cR
+@inject VmHostRegister<WirelessStationsVm> _sR
+@inject ICommandBus _bus
+@if (_cVm != null)
+{
+    <Observable Source="_cVm">
+        <MudExpansionPanels>
+            <MudExpansionPanel @bind-IsExpanded="@IsListOpened" >
+                <TitleContent>
+                    <MudStack Row="true" >
+                        @if (_cVm.Connectivity.State == DeviceState.Activated)
+                        {
+                            <MudIcon Icon="@SignalToIcon.Convert(_cVm.Connectivity.Signal)" />
+                            <MudText>@_cVm.Connectivity.Ssid</MudText>
+                        }
+                        else if(_cVm.Connectivity.State != DeviceState.Disconnected)
+                        {
+                            <MudText Style="font-weight:italic">@(ConvertToInfo(_cVm.Connectivity.State, _cVm.Connectivity.Ssid))</MudText>
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.WifiOff" Title="Wifi disconnected"/>
+                        }
+                    </MudStack>
+                </TitleContent>
+                <ChildContent>
+                    @if (_cVm.Connectivity.State == DeviceState.Activated)
+                    {
+                        <MudTextField Label="Ip configuration" T="string" ReadOnly="true" Text="@_cVm.Connectivity.IpConfig.ToString()"/>
+                        <MudButtonGroup Variant="Variant.Filled" Color="Color.Primary" Class="pt-8">
+                            <MudButton>Disconnect</MudButton>
+                        </MudButtonGroup>
+                    }
+                    <MudText>Available access points:</MudText>
+                    <Observable Source="@_sVm" Context="vm">
+                        <MudList T="string" >
+                            @if (_sVm != null && _sVm.Stations.Any(x => x.Ssid != _cVm?.Connectivity?.Ssid))
+                            {
+                                @foreach (var i in _sVm.Stations.Where(x => x.Ssid != _cVm?.Connectivity?.Ssid))
+                                {
+                                    <MudListItem T="string" Icon="@SignalToIcon.Convert(i.Signal)" OnClick="async () => { IsListOpened = false; await _sVm.Connect(i); }">@i.Ssid</MudListItem>
+                                }
+                            }
+                            else
+                            {
+                                <div style="text-align:center">
+                                    <MudProgressCircular Indeterminate="true" Style="margin-left:auto; margin-right:auto;"/>
+                                </div>
+                            }
+                        </MudList>
+                    </Observable>
+                </ChildContent>
+            </MudExpansionPanel>
+
+        </MudExpansionPanels>
+    </Observable>
+}
+
+@code
+{
+    private static string ConvertToInfo(DeviceState state, string? ssid)
+    {
+        return state switch
+        {
+            DeviceState.Unknown or DeviceState.Unmanaged or DeviceState.Unavailable or DeviceState.Disconnected or DeviceState.Failed => state.ToString(),
+            DeviceState.IpConfig or DeviceState.IpCheck or DeviceState.Prepare or DeviceState.Config => string.Join(" ", ssid, $"Connecting... (stage: {state.ToString().ToLower()})"),
+            DeviceState.NeedAuth => "Authentication needed...",
+            DeviceState.Secondaries => "Switching to secondaries network.",
+            DeviceState.Activated => string.Empty,
+            DeviceState.Deactivating => "Disconnecting...",
+            _ => $"Unsupported state: {state}"
+        };
+    }
+
+    private WirelessConnectionVm? _cVm;
+    private WirelessStationsVm? _sVm;
+    private bool _isListOpened;
+    private DateTime? _lastScanRequest;
+
+    public bool IsListOpened
+    {
+        get => _isListOpened;
+        set
+        {
+            _isListOpened = value;
+            if (!value) return;
+            if (_lastScanRequest.HasValue && DateTime.Now.Subtract(_lastScanRequest.Value) <= TimeSpan.FromSeconds(45)) return;
+            _lastScanRequest = DateTime.Now;
+            Task.Run(() => _bus.SendAsync(HostName, new RequestWifiScan()));
+        }
+    }
+
+    [Parameter]
+    public HostName HostName { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var tmp = _cR.Get(HostName);
+        tmp.InvokeAsync = this.InvokeAsync;
+        this._cVm = await tmp.Initialize(HostName);
+
+        this._sVm = await _sR.Get(HostName).Initialize(HostName);
+    }
+}

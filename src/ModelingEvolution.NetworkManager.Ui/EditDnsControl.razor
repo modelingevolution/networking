@@ -1,0 +1,28 @@
+@using ModelingEvolution.NetworkManager.Contracts
+
+<MudStack Spacing="3">
+    <MudSelect T="DnsMethod" @bind-Value="Method" Label="DNS assignment" Variant="Variant.Outlined">
+        <MudSelectItem Value="DnsMethod.Auto">Automatic (DHCP)</MudSelectItem>
+        <MudSelectItem Value="DnsMethod.Manual">Manual</MudSelectItem>
+    </MudSelect>
+
+    @if (Method == DnsMethod.Manual)
+    {
+        <MudTextField T="string" @bind-Value="PrimaryDns" Label="Primary DNS" Variant="Variant.Outlined"
+                      Placeholder="8.8.8.8" Required="true" />
+
+        <MudTextField T="string" @bind-Value="SecondaryDns" Label="Secondary DNS" Variant="Variant.Outlined"
+                      Placeholder="8.8.4.4" />
+    }
+</MudStack>
+
+@code {
+    [Parameter] public DnsMethod Method { get; set; }
+    [Parameter] public EventCallback<DnsMethod> MethodChanged { get; set; }
+
+    [Parameter] public string PrimaryDns { get; set; } = "";
+    [Parameter] public EventCallback<string> PrimaryDnsChanged { get; set; }
+
+    [Parameter] public string SecondaryDns { get; set; } = "";
+    [Parameter] public EventCallback<string> SecondaryDnsChanged { get; set; }
+}

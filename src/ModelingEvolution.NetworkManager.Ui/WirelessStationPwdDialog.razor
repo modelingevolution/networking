@@ -1,0 +1,70 @@
+@using System.ComponentModel.DataAnnotations
+@using ModelingEvolution.NetworkManager.Contracts
+@using MicroPlumberd
+@inject ICommandBus _bus
+@inject IEnvironment _env
+<MudDialog>
+    <DialogContent>
+        <div class="d-flex flex-column py-1" style="min-height:150px; max-width:280px; width:280px">
+            <MudText>@Ssid requires password:</MudText>
+            <MudFocusTrap>
+                <MudTextField Required="true" OnKeyDown="OnKeyDown" Immediate="true" AutoGrow="false" id="tx-pwd"
+                          @bind-Text="_pwd.Password" For="() => _pwd.Password" InputType="InputType.Password" Label="Password"/>
+            </MudFocusTrap>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Close">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public string? Ssid { get; set; }
+
+    [Parameter]
+    public string? InterfaceName { get; set; }
+
+    [Parameter]
+    public string? ProfileFileName { get; set; }
+
+    [Parameter]
+    public HostName? HostName { get; set; }
+
+    private DefineWirelessProfileSurrogate _pwd = new();
+
+    protected override void OnParametersSet()
+    {
+        _pwd = new DefineWirelessProfileSurrogate
+        {
+            Ssid = Ssid,
+            InterfaceName = InterfaceName,
+            FileName = ProfileFileName
+        };
+    }
+
+    async Task Close()
+    {
+        try
+        {
+            var hn = HostName ?? _env.HostName;
+            await _bus.SendAsync(hn, _pwd.Command(hn));
+            MudDialog?.Close(DialogResult.Ok(true));
+        }
+        catch (ValidationException) { }
+    }
+
+    void Cancel() => MudDialog?.Close(DialogResult.Cancel());
+
+    private Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            return Close();
+        }
+        return Task.CompletedTask;
+    }
+}

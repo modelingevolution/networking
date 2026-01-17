@@ -85,7 +85,7 @@ partial class NetworkManager : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<(ObjectPath Path, ObjectPath ActiveConnection)> AddAndActivateConnectionAsync(Dictionary<string, Dictionary<string, Variant>> connection, ObjectPath device, ObjectPath specificObject)
+    internal Task<(ObjectPath Path, ObjectPath ActiveConnection)> AddAndActivateConnectionAsync(Dictionary<string, Dictionary<string, VariantValue>> connection, ObjectPath device, ObjectPath specificObject)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_oo(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()
@@ -103,7 +103,7 @@ partial class NetworkManager : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<(ObjectPath Path, ObjectPath ActiveConnection, Dictionary<string, VariantValue> Result)> AddAndActivateConnection2Async(Dictionary<string, Dictionary<string, Variant>> connection, ObjectPath device, ObjectPath specificObject, Dictionary<string, Variant> options)
+    internal Task<(ObjectPath Path, ObjectPath ActiveConnection, Dictionary<string, VariantValue> Result)> AddAndActivateConnection2Async(Dictionary<string, Dictionary<string, VariantValue>> connection, ObjectPath device, ObjectPath specificObject, Dictionary<string, VariantValue> options)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_ooaesv(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()
@@ -793,7 +793,7 @@ partial class NetworkManager : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task SetGlobalDnsConfigurationAsync(Dictionary<string, Variant> value)
+    internal Task SetGlobalDnsConfigurationAsync(Dictionary<string, VariantValue> value)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

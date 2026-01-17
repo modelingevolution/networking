@@ -27,7 +27,7 @@
     [Parameter] public string Address { get; set; } = "";
     [Parameter] public uint Prefix { get; set; } = 24;
     [Parameter] public string Gateway { get; set; } = "";
-    [Parameter] public uint Mtu { get; set; }
+    [Parameter] public uint Mtu { get; set; } = 1500;
 
     private void Cancel() => MudDialog.Cancel();
 

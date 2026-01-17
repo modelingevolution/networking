@@ -417,7 +417,7 @@ class NetworkManagerObject
         }
         return dictionary;
     }
-    protected static void WriteType_aesaesv(ref MessageWriter writer, Dictionary<string, Dictionary<string, Variant>> value)
+    protected static void WriteType_aesaesv(ref MessageWriter writer, Dictionary<string, Dictionary<string, VariantValue>> value)
     {
         ArrayStart arrayStart = writer.WriteDictionaryStart();
         foreach (var item in value)
@@ -437,7 +437,7 @@ class NetworkManagerObject
         }
         writer.WriteArrayEnd(arrayStart);
     }
-    protected static void WriteType_aaesv(ref MessageWriter writer, Dictionary<string, Variant>[] value)
+    protected static void WriteType_aaesv(ref MessageWriter writer, Dictionary<string, VariantValue>[] value)
     {
         ArrayStart arrayStart = writer.WriteArrayStart(DBusType.Array);
         foreach (var item in value)

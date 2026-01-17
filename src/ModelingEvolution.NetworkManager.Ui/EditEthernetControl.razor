@@ -1,4 +1,5 @@
 @using ModelingEvolution.NetworkManager.Contracts
+@using ModelingEvolution.Ipv4
 
 <MudStack Spacing="3">
     <MudSelect T="Ip4Method" Value="Method" ValueChanged="OnMethodChanged" Label="IP assignment" Variant="Variant.Outlined">
@@ -8,18 +9,16 @@
 
     @if (Method == Ip4Method.Manual)
     {
-        <MudTextField T="string" Value="Address" ValueChanged="OnAddressChanged" Label="IPv4 address" Variant="Variant.Outlined"
-                      Placeholder="192.168.1.100" Required="true" />
-
-        <MudNumericField T="uint" Value="Prefix" ValueChanged="OnPrefixChanged" Label="Subnet prefix" Variant="Variant.Outlined"
-                         Min="1" Max="32" />
+        <MudTextField T="string" @bind-Value="_addressInput" Label="IPv4 address" Variant="Variant.Outlined"
+                      Placeholder="192.168.1.100/24" Required="true"
+                      OnBlur="OnAddressBlur" HelperText="Format: address/prefix (e.g. 192.168.1.100/24)" />
 
         <MudTextField T="string" Value="Gateway" ValueChanged="OnGatewayChanged" Label="Gateway" Variant="Variant.Outlined"
                       Placeholder="192.168.1.1" />
     }
 
-    <MudNumericField T="uint" Value="Mtu" ValueChanged="OnMtuChanged" Label="MTU (0 = Auto)" Variant="Variant.Outlined"
-                     Min="0" Max="9000" HelperText="Use 9000 for GigE Vision cameras" />
+    <MudNumericField T="uint" Value="Mtu" ValueChanged="OnMtuChanged" Label="MTU" Variant="Variant.Outlined"
+                     Min="0" Max="9000" HelperText="Standard: 1500, Jumbo: 9000 for GigE Vision cameras" />
 </MudStack>
 
 @code {
@@ -35,8 +34,23 @@
     [Parameter] public string Gateway { get; set; } = "";
     [Parameter] public EventCallback<string> GatewayChanged { get; set; }
 
-    [Parameter] public uint Mtu { get; set; }
+    [Parameter] public uint Mtu { get; set; } = 1500;
     [Parameter] public EventCallback<uint> MtuChanged { get; set; }
+
+    private string _addressInput = "";
+
+    protected override void OnParametersSet()
+    {
+        // Combine address and prefix into single input format
+        if (!string.IsNullOrEmpty(Address))
+        {
+            _addressInput = $"{Address}/{Prefix}";
+        }
+        else
+        {
+            _addressInput = "";
+        }
+    }
 
     private async Task OnMethodChanged(Ip4Method value)
     {
@@ -44,16 +58,55 @@
         await MethodChanged.InvokeAsync(value);
     }
 
-    private async Task OnAddressChanged(string value)
+    private async Task OnAddressBlur()
     {
-        Address = value;
-        await AddressChanged.InvokeAsync(value);
+        if (string.IsNullOrWhiteSpace(_addressInput)) return;
+
+        // Parse address/prefix format
+        var input = _addressInput.Trim();
+        string addressPart;
+        uint prefixPart = 24;
+
+        if (input.Contains('/'))
+        {
+            var parts = input.Split('/');
+            addressPart = parts[0];
+            if (parts.Length > 1 && uint.TryParse(parts[1], out var p) && p >= 1 && p <= 32)
+            {
+                prefixPart = p;
+            }
+        }
+        else
+        {
+            addressPart = input;
+        }
+
+        // Update address and prefix
+        if (Ipv4Address.TryParse(addressPart, null, out var addr))
+        {
+            Address = addressPart;
+            Prefix = prefixPart;
+            _addressInput = $"{addressPart}/{prefixPart}";
+
+            await AddressChanged.InvokeAsync(Address);
+            await PrefixChanged.InvokeAsync(Prefix);
+
+            // Auto-calculate gateway if empty
+            if (string.IsNullOrEmpty(Gateway))
+            {
+                var gateway = CalculateDefaultGateway(addr, (int)prefixPart);
+                Gateway = gateway.ToString();
+                await GatewayChanged.InvokeAsync(Gateway);
+            }
+        }
     }
 
-    private async Task OnPrefixChanged(uint value)
+    private static Ipv4Address CalculateDefaultGateway(Ipv4Address address, int prefixLength)
     {
-        Prefix = value;
-        await PrefixChanged.InvokeAsync(value);
+        // Calculate network address and use .1 as default gateway
+        uint mask = prefixLength == 0 ? 0 : uint.MaxValue << (32 - prefixLength);
+        uint network = address.Value & mask;
+        return Ipv4Address.From(network + 1);
     }
 
     private async Task OnGatewayChanged(string value)

@@ -101,14 +101,21 @@ internal class NetworkManagerListener(IPlumberInstance plumber, IEnvironment env
         var device = (DeviceInfo)sender!;
         log.LogInformation("Ethernet state changed: {Interface} -> {NewState}", device.InterfaceName, e.NewState);
         // Update both the connection state and the interfaces list
-        _channel?.Writer.WriteAsync(async token => await AppendEthernetConnection(device.InterfaceName!, token));
+        // When state changes to Activated, add delay to allow IP configuration to complete
+        var delay = e.NewState == DeviceState.Activated ? TimeSpan.FromSeconds(2) : TimeSpan.Zero;
+        _channel?.Writer.WriteAsync(async token => await AppendEthernetConnection(device.InterfaceName!, delay, token));
         _channel?.Writer.WriteAsync(AppendEthernetInterfaces);
     }
 
-    private async Task AppendEthernetConnection(string interfaceName, CancellationToken stoppingToken)
+    private async Task AppendEthernetConnection(string interfaceName, TimeSpan delay, CancellationToken stoppingToken)
     {
         try
         {
+            if (delay > TimeSpan.Zero)
+            {
+                log.LogInformation("Waiting {Delay}s for IP configuration to settle on {Interface}.", delay.TotalSeconds, interfaceName);
+                await Task.Delay(delay, stoppingToken);
+            }
             await EthernetConnectionService.AppendIfRequired(_client!, plumber, env, interfaceName, stoppingToken);
             log.LogInformation("Ethernet state updated for {Interface}.", interfaceName);
         }

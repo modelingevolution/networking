@@ -7,7 +7,7 @@ partial class Device : NetworkManagerObject
     private const string __Interface = "org.freedesktop.NetworkManager.Device";
     internal Device(NetworkManagerService service, ObjectPath path) : base(service, path)
     { }
-    internal Task ReapplyAsync(Dictionary<string, Dictionary<string, Variant>> connection, ulong versionId, uint flags)
+    internal Task ReapplyAsync(Dictionary<string, Dictionary<string, VariantValue>> connection, ulong versionId, uint flags)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()
@@ -546,7 +546,7 @@ partial class Device : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task SetLldpNeighborsAsync(Dictionary<string, Variant>[] value)
+    internal Task SetLldpNeighborsAsync(Dictionary<string, VariantValue>[] value)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

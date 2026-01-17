@@ -26,6 +26,7 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
         _channel = Channel.CreateBounded<Func<CancellationToken, Task>>(new BoundedChannelOptions(5) { FullMode = BoundedChannelFullMode.DropOldest });
         _cts = new CancellationTokenSource();
         _ = Task.Factory.StartNew(OnStateAppender, TaskCreationOptions.LongRunning);
+        _log.LogInformation("NetworkManagerCommandHandler created for host: {HostName}", _env.HostName);
     }
 
     private async Task OnStateAppender()
@@ -289,28 +290,30 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
         }
 
         var profile = await device.GetConnectionProfile();
-        if (profile == null)
-        {
-            _log.LogWarning("ConfigureEthernetConnection failed: No profile for {Interface}", cmd.InterfaceName);
-            throw new FaultException<ConnectionError>(new ConnectionError
-            {
-                Message = $"No connection profile found for '{cmd.InterfaceName}'.",
-                Reason = ConnectionErrorReason.MissingProfile
-            });
-        }
 
         try
         {
-            var settings = await profile.GetConnectionSettings();
-            var newSettings = BuildEthernetSettings(settings, cmd);
+            if (profile == null)
+            {
+                // Create a new profile for this interface
+                _log.LogInformation("ConfigureEthernetConnection: Creating new profile for {Interface}", cmd.InterfaceName);
+                var newSettings = BuildEthernetSettings(null, cmd);
+                var profileId = await _client.AddEthernetConnection(cmd.InterfaceName!, newSettings);
 
-            await profile.UpdateConnectionSettings(newSettings);
+                // Activate the new connection
+                await _client.ActivateConnection(profileId, device.Id);
+            }
+            else
+            {
+                // Update existing profile
+                var settings = await profile.GetConnectionSettings();
+                var newSettings = BuildEthernetSettings(settings, cmd);
 
-            // Reactivate connection to apply changes
-            await _client.ReactivateConnection(profile.Id, device.Id);
+                await profile.UpdateConnectionSettings(newSettings);
 
-            // Append updated state so UI receives the changes via EventStore
-            await EthernetConnectionService.AppendIfRequired(_client, _plumber, _env, cmd.InterfaceName!, default);
+                // Reactivate connection to apply changes
+                await _client.ReactivateConnection(profile.Id, device.Id);
+            }
 
             _log.LogInformation("ConfigureEthernetConnection: Success for {Interface}", cmd.InterfaceName);
         }
@@ -368,9 +371,6 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
             // Reactivate connection to apply changes
             await _client.ReactivateConnection(profile.Id, device.Id);
 
-            // Append updated state so UI receives the changes via EventStore
-            await EthernetConnectionService.AppendIfRequired(_client, _plumber, _env, cmd.InterfaceName!, default);
-
             _log.LogInformation("ConfigureDns: Success for {Interface}", cmd.InterfaceName);
         }
         catch (Exception ex) when (ex is not FaultException<ConnectionError>)
@@ -384,54 +384,63 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
         }
     }
 
-    private static Dictionary<string, Dictionary<string, Variant>> BuildEthernetSettings(
-        Dictionary<string, Dictionary<string, VariantValue>> currentSettings,
+    private static Dictionary<string, Dictionary<string, VariantValue>> BuildEthernetSettings(
+        Dictionary<string, Dictionary<string, VariantValue>>? currentSettings,
         ConfigureEthernetConnection cmd)
     {
-        var settings = new Dictionary<string, Dictionary<string, Variant>>();
+        var settings = new Dictionary<string, Dictionary<string, VariantValue>>();
 
-        // Copy connection section
-        if (currentSettings.TryGetValue("connection", out var connSection))
+        // Build connection section
+        var conn = new Dictionary<string, VariantValue>();
+        if (currentSettings != null && currentSettings.TryGetValue("connection", out var connSection))
         {
-            var conn = new Dictionary<string, Variant>();
-            if (connSection.TryGetValue("id", out var id)) conn["id"] = new Variant(id.GetString());
-            if (connSection.TryGetValue("type", out var type)) conn["type"] = new Variant(type.GetString());
-            if (connSection.TryGetValue("uuid", out var uuid)) conn["uuid"] = new Variant(uuid.GetString());
-            conn["interface-name"] = new Variant(cmd.InterfaceName!);
-            settings["connection"] = conn;
-        }
-
-        // Build ipv4 section
-        var ipv4 = new Dictionary<string, Variant>();
-        if (cmd.Method == Ip4Method.Auto)
-        {
-            ipv4["method"] = new Variant("auto");
+            // Copy existing values
+            if (connSection.TryGetValue("id", out var id)) conn["id"] = id.GetString();
+            if (connSection.TryGetValue("type", out var type)) conn["type"] = type.GetString();
+            if (connSection.TryGetValue("uuid", out var uuid)) conn["uuid"] = uuid.GetString();
         }
         else
         {
-            ipv4["method"] = new Variant("manual");
+            // Create new connection
+            conn["id"] = cmd.InterfaceName!;
+            conn["type"] = "802-3-ethernet";
+            conn["uuid"] = Guid.NewGuid().ToString();
+        }
+        conn["interface-name"] = cmd.InterfaceName!;
+        settings["connection"] = conn;
+
+        // Build ipv4 section
+        var ipv4 = new Dictionary<string, VariantValue>();
+        if (cmd.Method == Ip4Method.Auto)
+        {
+            ipv4["method"] = "auto";
+        }
+        else
+        {
+            ipv4["method"] = "manual";
 
             if (cmd.IpConfig.HasValue)
             {
                 var config = cmd.IpConfig.Value;
-                // Build address-data array: aa{sv} - array of dictionaries with address/prefix
-                var addressEntry = new Dictionary<string, Variant>
+                // Use legacy addresses format: aau - array of uint32 arrays [ip, prefix, gateway]
+                // NetworkManager expects addresses in network byte order (big-endian)
+                var addrNetOrder = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(config.Address.Value);
+                var gwNetOrder = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(config.Gateway.Value);
+                ipv4["addresses"] = new Array<Array<uint>>
                 {
-                    ["address"] = new Variant(config.Address.ToString()),
-                    ["prefix"] = new Variant((uint)config.PrefixLength)
+                    new Array<uint> { addrNetOrder, (uint)config.PrefixLength, gwNetOrder }
                 };
-                ipv4["address-data"] = Variant.FromArray(new Array<Dictionary<string, Variant>>(new[] { addressEntry }));
-                ipv4["gateway"] = new Variant(config.Gateway.ToString());
+                ipv4["gateway"] = config.Gateway.ToString();
             }
         }
 
         settings["ipv4"] = ipv4;
 
         // Build 802-3-ethernet section for MTU
-        var ethernet = new Dictionary<string, Variant>();
+        var ethernet = new Dictionary<string, VariantValue>();
         if (cmd.Mtu.HasValue && cmd.Mtu.Value > 0)
         {
-            ethernet["mtu"] = new Variant(cmd.Mtu.Value);
+            ethernet["mtu"] = cmd.Mtu.Value;
         }
         if (ethernet.Count > 0)
         {
@@ -441,48 +450,48 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
         return settings;
     }
 
-    private static Dictionary<string, Dictionary<string, Variant>> BuildDnsSettings(
+    private static Dictionary<string, Dictionary<string, VariantValue>> BuildDnsSettings(
         Dictionary<string, Dictionary<string, VariantValue>> currentSettings,
         ConfigureDns cmd)
     {
-        var settings = new Dictionary<string, Dictionary<string, Variant>>();
+        var settings = new Dictionary<string, Dictionary<string, VariantValue>>();
 
         // Copy connection section
         if (currentSettings.TryGetValue("connection", out var connSection))
         {
-            var conn = new Dictionary<string, Variant>();
-            if (connSection.TryGetValue("id", out var id)) conn["id"] = new Variant(id.GetString());
-            if (connSection.TryGetValue("type", out var type)) conn["type"] = new Variant(type.GetString());
-            if (connSection.TryGetValue("uuid", out var uuid)) conn["uuid"] = new Variant(uuid.GetString());
-            if (connSection.TryGetValue("interface-name", out var iface)) conn["interface-name"] = new Variant(iface.GetString());
+            var conn = new Dictionary<string, VariantValue>();
+            if (connSection.TryGetValue("id", out var id)) conn["id"] = id.GetString();
+            if (connSection.TryGetValue("type", out var type)) conn["type"] = type.GetString();
+            if (connSection.TryGetValue("uuid", out var uuid)) conn["uuid"] = uuid.GetString();
+            if (connSection.TryGetValue("interface-name", out var iface)) conn["interface-name"] = iface.GetString();
             settings["connection"] = conn;
         }
 
         // Build ipv4 section - preserve existing IP settings, update DNS
-        var ipv4 = new Dictionary<string, Variant>();
+        var ipv4 = new Dictionary<string, VariantValue>();
 
         if (currentSettings.TryGetValue("ipv4", out var currentIpv4))
         {
             // Preserve method
             if (currentIpv4.TryGetValue("method", out var method))
-                ipv4["method"] = new Variant(method.GetString());
+                ipv4["method"] = method.GetString();
             // Preserve gateway
             if (currentIpv4.TryGetValue("gateway", out var gw))
             {
                 var gwStr = gw.GetString();
                 if (!string.IsNullOrEmpty(gwStr))
-                    ipv4["gateway"] = new Variant(gwStr);
+                    ipv4["gateway"] = gwStr;
             }
         }
 
         // Set DNS
         if (cmd.Method == DnsMethod.Auto)
         {
-            ipv4["ignore-auto-dns"] = new Variant(false);
+            ipv4["ignore-auto-dns"] = false;
         }
         else
         {
-            ipv4["ignore-auto-dns"] = new Variant(true);
+            ipv4["ignore-auto-dns"] = true;
 
             var dnsList = new List<uint>();
             if (cmd.PrimaryDns.HasValue)
@@ -491,7 +500,7 @@ public partial class NetworkManagerCommandHandler : IAsyncDisposable
                 dnsList.Add(cmd.SecondaryDns.Value.Value);
 
             if (dnsList.Count > 0)
-                ipv4["dns"] = Variant.FromArray(new Array<uint>(dnsList.ToArray()));
+                ipv4["dns"] = VariantValue.Array(dnsList.ToArray());
         }
 
         settings["ipv4"] = ipv4;

@@ -247,6 +247,17 @@ namespace ModelingEvolution.NetworkManager
             await NetworkManager.ActivateConnectionAsync(profileId, deviceId, "/");
         }
 
+        public async Task<PathId> AddEthernetConnection(string interfaceName, Dictionary<string, Dictionary<string, VariantValue>> settings)
+        {
+            var path = await Settings.AddConnectionAsync(settings);
+            return path.ToString();
+        }
+
+        public async Task ActivateConnection(PathId profileId, PathId deviceId)
+        {
+            await NetworkManager.ActivateConnectionAsync(profileId, deviceId, "/");
+        }
+
         public async ValueTask DisposeAsync()
         {
             if (this.Connection is IAsyncDisposable connectionAsyncDisposable)

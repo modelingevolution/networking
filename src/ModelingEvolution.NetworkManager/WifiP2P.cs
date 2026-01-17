@@ -7,7 +7,7 @@ partial class WifiP2P : NetworkManagerObject
     private const string __Interface = "org.freedesktop.NetworkManager.Device.WifiP2P";
     internal WifiP2P(NetworkManagerService service, ObjectPath path) : base(service, path)
     { }
-    internal Task StartFindAsync(Dictionary<string, Variant> options)
+    internal Task StartFindAsync(Dictionary<string, VariantValue> options)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

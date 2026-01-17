@@ -97,7 +97,7 @@
             { x => x.Address, _vm.State.IpConfig?.Address.ToString() ?? "" },
             { x => x.Prefix, (uint)(_vm.State.IpConfig?.PrefixLength ?? 24) },
             { x => x.Gateway, _vm.State.IpConfig?.Gateway.ToString() ?? "" },
-            { x => x.Mtu, _vm.State.Mtu }
+            { x => x.Mtu, _vm.State.Mtu > 0 ? _vm.State.Mtu : 1500u }
         };
 
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };

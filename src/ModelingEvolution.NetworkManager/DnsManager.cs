@@ -45,7 +45,7 @@ partial class DnsManager : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task SetConfigurationAsync(Dictionary<string, Variant>[] value)
+    internal Task SetConfigurationAsync(Dictionary<string, VariantValue>[] value)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

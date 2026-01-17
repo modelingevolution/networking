@@ -26,7 +26,7 @@ partial class IP6Config : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task SetAddressDataAsync(Dictionary<string, Variant>[] value)
+    internal Task SetAddressDataAsync(Dictionary<string, VariantValue>[] value)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()
@@ -83,7 +83,7 @@ partial class IP6Config : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task SetRouteDataAsync(Dictionary<string, Variant>[] value)
+    internal Task SetRouteDataAsync(Dictionary<string, VariantValue>[] value)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

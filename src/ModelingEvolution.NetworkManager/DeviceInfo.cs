@@ -222,6 +222,10 @@ public record DeviceInfo
         if (activeId == "/")
         {
             var ipV4ConfigId2 = await Device.GetIp4ConfigAsync();
+            // During connection transitions, IP4Config may also be "/" - return null in that case
+            if (ipV4ConfigId2 == "/" || string.IsNullOrEmpty(ipV4ConfigId2.ToString()))
+                return null;
+
             var ipV4Config2 = Device.Service.CreateIP4Config(ipV4ConfigId2);
             var ips2 = await ipV4Config2.GetAddressDataAsync();
             Ipv4Address ip2 = Ipv4Address.Loopback;
@@ -240,6 +244,10 @@ public record DeviceInfo
 
         var active = Device.Service.CreateActive(activeId);
         var ipV4ConfigId = await active.GetIp4ConfigAsync();
+        // During connection transitions, IP4Config may be "/" - return null in that case
+        if (ipV4ConfigId == "/" || string.IsNullOrEmpty(ipV4ConfigId.ToString()))
+            return null;
+
         var ipV4Config = Device.Service.CreateIP4Config(ipV4ConfigId);
         var ips = await ipV4Config.GetAddressDataAsync();
         Ipv4Address ip = Ipv4Address.Loopback;

@@ -35,7 +35,7 @@ partial class Wireless : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task RequestScanAsync(Dictionary<string, Variant> options)
+    internal Task RequestScanAsync(Dictionary<string, VariantValue> options)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()

@@ -7,7 +7,7 @@ partial class Connection : NetworkManagerObject
     private const string __Interface = "org.freedesktop.NetworkManager.Settings.Connection";
     internal Connection(NetworkManagerService service, ObjectPath path) : base(service, path)
     { }
-    internal Task UpdateAsync(Dictionary<string, Dictionary<string, Variant>> properties)
+    internal Task UpdateAsync(Dictionary<string, Dictionary<string, VariantValue>> properties)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()
@@ -23,7 +23,7 @@ partial class Connection : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task UpdateUnsavedAsync(Dictionary<string, Dictionary<string, Variant>> properties)
+    internal Task UpdateUnsavedAsync(Dictionary<string, Dictionary<string, VariantValue>> properties)
     {
         return this.Connection.CallMethodAsync(CreateMessage());
         MessageBuffer CreateMessage()
@@ -111,7 +111,7 @@ partial class Connection : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<Dictionary<string, VariantValue>> Update2Async(Dictionary<string, Dictionary<string, Variant>> settings, uint flags, Dictionary<string, Variant> args)
+    internal Task<Dictionary<string, VariantValue>> Update2Async(Dictionary<string, Dictionary<string, VariantValue>> settings, uint flags, Dictionary<string, VariantValue> args)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_aesv(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()

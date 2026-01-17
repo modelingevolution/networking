@@ -37,7 +37,7 @@ partial class Settings : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<ObjectPath> AddConnectionAsync(Dictionary<string, Dictionary<string, Variant>> connection)
+    internal Task<ObjectPath> AddConnectionAsync(Dictionary<string, Dictionary<string, VariantValue>> connection)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()
@@ -53,7 +53,7 @@ partial class Settings : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<ObjectPath> AddConnectionUnsavedAsync(Dictionary<string, Dictionary<string, Variant>> connection)
+    internal Task<ObjectPath> AddConnectionUnsavedAsync(Dictionary<string, Dictionary<string, VariantValue>> connection)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()
@@ -69,7 +69,7 @@ partial class Settings : NetworkManagerObject
             return writer.CreateMessage();
         }
     }
-    internal Task<(ObjectPath Path, Dictionary<string, VariantValue> Result)> AddConnection2Async(Dictionary<string, Dictionary<string, Variant>> settings, uint flags, Dictionary<string, Variant> args)
+    internal Task<(ObjectPath Path, Dictionary<string, VariantValue> Result)> AddConnection2Async(Dictionary<string, Dictionary<string, VariantValue>> settings, uint flags, Dictionary<string, VariantValue> args)
     {
         return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_oaesv(m, (NetworkManagerObject)s!), this);
         MessageBuffer CreateMessage()

@@ -21,31 +21,30 @@ public record AccessPointInfo
     internal NetworkManagerClient Client { get; init; }
     public async Task<ProfileInfo> Connect(string password)
     {
-        var connectionSettings = new Dictionary<string, Dictionary<string, Variant>>
+        var connectionSettings = new Dictionary<string, Dictionary<string, VariantValue>>
         {
             {
-                "802-11-wireless", new Dictionary<string, Variant>
+                "802-11-wireless", new Dictionary<string, VariantValue>
                 {
-                    //{ "ssid", Variant.FromArray<byte>(new Array<byte>(Encoding.UTF8.GetBytes(Ssid))) },
-                    { "ssid", new Variant(Ssid)},
-                    { "mode", new Variant("infrastructure") },
-                    { "security", new Variant("802-11-wireless-security") }
+                    { "ssid", Ssid },
+                    { "mode", "infrastructure" },
+                    { "security", "802-11-wireless-security" }
                 }
             },
             {
-                "802-11-wireless-security", new Dictionary<string, Variant>
+                "802-11-wireless-security", new Dictionary<string, VariantValue>
                 {
-                    { "psk", new Variant(password) },
-                    { "auth-alg", new Variant("shared") },
-                    { "key-mgmt", new Variant("wpa-psk") },
-                    { "psk-flags", new Variant(0u)} // none, system is reposible for storing pwd
+                    { "psk", password },
+                    { "auth-alg", "shared" },
+                    { "key-mgmt", "wpa-psk" },
+                    { "psk-flags", 0u } // none, system is responsible for storing pwd
                 }
             },
             {
-                "connection", new Dictionary<string, Variant>
+                "connection", new Dictionary<string, VariantValue>
                 {
-                    { "type", new Variant("802-11-wireless") },
-                    { "id", new Variant(Ssid) }
+                    { "type", "802-11-wireless" },
+                    { "id", Ssid }
                 }
             },
         };
@@ -65,7 +64,7 @@ public record AccessPointInfo
     }
     public async Task RequestScan(bool wait = true)
     {
-        await Wireless.RequestScanAsync(new Dictionary<string, Variant>());
+        await Wireless.RequestScanAsync(new Dictionary<string, VariantValue>());
         if (wait) await Task.Delay(5000);
     }
 
@@ -75,28 +74,28 @@ public record AccessPointInfo
         var profile = await Client.GetProfiles().FirstOrDefaultAsync(x => x.FileName == dataFileName);
         if (profile != null)
         {
-            var connectionSettings = new Dictionary<string, Dictionary<string, Variant>>
+            var connectionSettings = new Dictionary<string, Dictionary<string, VariantValue>>
             {
                 {
-                    "802-11-wireless", new Dictionary<string, Variant>
+                    "802-11-wireless", new Dictionary<string, VariantValue>
                     {
-                        { "ssid", Variant.FromArray<byte>(new Array<byte>(Encoding.UTF8.GetBytes(Ssid))) },
+                        { "ssid", VariantValue.Array(Encoding.UTF8.GetBytes(Ssid)) },
                     }
                 },
                 {
-                    "802-11-wireless-security", new Dictionary<string, Variant>
+                    "802-11-wireless-security", new Dictionary<string, VariantValue>
                     {
-                        { "psk", new Variant(pwd) },
-                        { "key-mgmt", new Variant("wpa-psk") },
-                        { "psk-flags", new Variant(0u)} // none, system is reposible for storing pwd
+                        { "psk", pwd },
+                        { "key-mgmt", "wpa-psk" },
+                        { "psk-flags", 0u } // none, system is responsible for storing pwd
                     }
                 },
                 {
-                    "connection", new Dictionary<string, Variant>
+                    "connection", new Dictionary<string, VariantValue>
                     {
-                        { "id", new Variant(connectionId??Ssid) },
-                        { "type", new Variant("802-11-wireless") },
-                        { "interface-name", new Variant(this.SourceInterface)},
+                        { "id", connectionId ?? Ssid },
+                        { "type", "802-11-wireless" },
+                        { "interface-name", this.SourceInterface },
                     }
                 },
             };
@@ -108,35 +107,32 @@ public record AccessPointInfo
     }
     public async Task<ProfileInfo> New(string pwd, string conName)
     {
-        var connectionSettings = new Dictionary<string, Dictionary<string, Variant>>
+        var connectionSettings = new Dictionary<string, Dictionary<string, VariantValue>>
         {
             {
-                "802-11-wireless", new Dictionary<string, Variant>
+                "802-11-wireless", new Dictionary<string, VariantValue>
                 {
-                    { "ssid", Variant.FromArray<byte>(new Array<byte>(Encoding.UTF8.GetBytes(Ssid))) },
-                    //{ "ssid", new Variant(Ssid)},
-                    //{ "mode", new Variant("infrastructure") },
-                    //{ "security", new Variant("802-11-wireless-security") }
+                    { "ssid", VariantValue.Array(Encoding.UTF8.GetBytes(Ssid)) },
                 }
             },
             {
-                "802-11-wireless-security", new Dictionary<string, Variant>
+                "802-11-wireless-security", new Dictionary<string, VariantValue>
                 {
-                    { "psk", new Variant(pwd) },
-                    { "key-mgmt", new Variant("wpa-psk") },
-                    { "psk-flags", new Variant(0u)} // none, system is reposible for storing pwd
+                    { "psk", pwd },
+                    { "key-mgmt", "wpa-psk" },
+                    { "psk-flags", 0u } // none, system is responsible for storing pwd
                 }
             },
             {
-                "connection", new Dictionary<string, Variant>
+                "connection", new Dictionary<string, VariantValue>
                 {
-                    { "type", new Variant("802-11-wireless") },
-                    { "id", new Variant(conName??Ssid) },
-                    { "interface-name", new Variant(this.SourceInterface)},
+                    { "type", "802-11-wireless" },
+                    { "id", conName ?? Ssid },
+                    { "interface-name", this.SourceInterface },
                 }
             },
         };
-       
+
         var r = await Client.Settings.AddConnectionAsync(connectionSettings);
         var connection = Client.Service.CreateConnection(r);
         
@@ -221,7 +217,7 @@ public record ProfileInfo
         return await Connection.GetSettingsAsync();
     }
 
-    public async Task UpdateConnectionSettings(Dictionary<string, Dictionary<string, Variant>> settings)
+    public async Task UpdateConnectionSettings(Dictionary<string, Dictionary<string, VariantValue>> settings)
     {
         await Connection.UpdateAsync(settings);
     }

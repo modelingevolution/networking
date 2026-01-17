@@ -2,12 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ModelingEvolution.Ipv4;
 using ModelingEvolution.NetworkManager.Contracts;
 using MicroPlumberd;
+using Microsoft.Extensions.Logging;
 
 namespace ModelingEvolution.NetworkManager.Ui;
 
 [EventHandler]
 [INotifyPropertyChanged]
-internal partial class EthernetConfigurationVm(IPlumber plumber, ICommandBus commandBus) : IAsyncDisposable
+internal partial class EthernetConfigurationVm(IPlumber plumber, ICommandBus commandBus, ILogger<EthernetConfigurationVm> log) : IAsyncDisposable
 {
     private CancellationTokenSource _cts = new();
     private EthernetConnectionState _state = new();
@@ -70,7 +71,7 @@ internal partial class EthernetConfigurationVm(IPlumber plumber, ICommandBus com
         EditAddress = State.IpConfig?.Address.ToString() ?? "";
         EditPrefix = (uint)(State.IpConfig?.PrefixLength ?? 24);
         EditGateway = State.IpConfig?.Gateway.ToString() ?? "";
-        EditMtu = State.Mtu;
+        EditMtu = State.Mtu > 0 ? State.Mtu : 1500; // Default to 1500 if not set
         IsEditing = true;
     }
 
@@ -99,13 +100,13 @@ internal partial class EthernetConfigurationVm(IPlumber plumber, ICommandBus com
                 }
             }
 
-            Console.WriteLine($"[EthernetConfigurationVm] Sending ConfigureEthernetConnection: Host={_hostName}, Interface={_interfaceName}, Method={EditMethod}");
+            log.LogInformation("Sending ConfigureEthernetConnection: Host={HostName}, Interface={Interface}, Method={Method}", _hostName, _interfaceName, EditMethod);
             await commandBus.SendAsync(_hostName, cmd);
-            Console.WriteLine($"[EthernetConfigurationVm] Command sent successfully");
+            log.LogInformation("ConfigureEthernetConnection sent successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[EthernetConfigurationVm] Error: {ex}");
+            log.LogError(ex, "ConfigureEthernetConnection failed");
             throw;
         }
         finally

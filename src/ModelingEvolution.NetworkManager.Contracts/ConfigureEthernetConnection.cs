@@ -8,6 +8,9 @@ namespace ModelingEvolution.NetworkManager.Contracts;
 [ThrowsFaultException<ConnectionError>]
 public record ConfigureEthernetConnection
 {
+
+    public Guid Id { get; set; } = Guid.NewGuid();
+
     [Required]
     public string? InterfaceName { get; set; }
 
